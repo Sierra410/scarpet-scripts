@@ -56,17 +56,35 @@ _interval(p, a, i) -> (
 );
 
 _join_afk(p) -> (
-    if(
-        query(p, 'team') == null,
-        team_add(global_afk_team, p),
-    );
+    team = query(p, 'team');
+
+    if(team != null, (
+        nbt = nbt_storage(global_def_team_storage);
+        put(nbt, query(p, 'uuid'), team);
+        nbt_storage(global_def_team_storage, nbt);
+    ));
+
+    team_add(global_afk_team, p);
 );
 
 _leave_afk(p) -> (
+    team = query(p, 'team');
+
     if(
-        query(p, 'team') == global_afk_team,
-        team_leave(p),
+        team != global_afk_team,
+        return(null);
     );
+
+
+    nbt = nbt_storage(global_def_team_storage);
+    team = get(nbt, query(p, 'uuid'));
+
+    if(team == null, (
+        team_leave(p);
+        return(null);
+    ));
+
+    team_add(team, p);
 );
 
 __on_player_connects(p) -> (
@@ -85,6 +103,7 @@ __on_player_takes_damage(p, amount, source, source_entity) -> (
 );
 
 __on_start() -> (
+    global_def_team_storage = 'default_team';
     global_afk_team = 'AFK';
 
     team = team_add(global_afk_team);
