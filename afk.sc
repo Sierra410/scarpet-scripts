@@ -11,7 +11,7 @@ __config() -> {
     'arguments' -> {
         'action' -> {
             'type' -> 'term',
-            'options' -> ['attack', 'use', 'sneak', 'stop', 'shadow'],
+            'options' -> ['attack', 'use', 'sneak', 'stop'],
         },
         'interval' -> {
             'type' -> 'int',
@@ -32,10 +32,12 @@ _error(fmt, ... args) -> (
 
 _supports_interval(a) -> a == 'attack' || a == 'use';
 
+// Format and run /player command
 _player(p, ... a) -> (
     run(str('player %s %s', p, join(' ', a)));
 );
 
+// Action w/o interval. Actions that require interval are 'continuous'
 _action(p, a) -> (
     if(
         a == 'shadow', _join_afk(p),
@@ -45,6 +47,7 @@ _action(p, a) -> (
     _player(p, a);
 );
 
+// Action with interval. Interval of <1 = once
 _interval(p, a, i) -> (
     if(!_supports_interval(a), (
         _error('Only "use" and "attack" can take interval!');
@@ -52,9 +55,13 @@ _interval(p, a, i) -> (
         return(null);
     ));
 
-    _player(p, a, 'interval', i);
+    if(i < 1,
+        _player(p, a, 'once'),
+        _player(p, a, 'interval', i),
+    );
 );
 
+// Join the AFK team
 _join_afk(p) -> (
     team = query(p, 'team');
 
@@ -67,6 +74,7 @@ _join_afk(p) -> (
     team_add(global_afk_team, p);
 );
 
+// Leave the AFK team and restore the default one
 _leave_afk(p) -> (
     team = query(p, 'team');
 
@@ -98,7 +106,7 @@ __on_player_takes_damage(p, amount, source, source_entity) -> (
 
         run(str('player %s kill', p));
 
-        return('cancel')
+        return('cancel');
     ));
 );
 
