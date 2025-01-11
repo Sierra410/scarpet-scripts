@@ -101,13 +101,17 @@ __on_player_connects(p) -> (
 
 __on_player_takes_damage(p, amount, source, source_entity) -> (
     type = query(p, 'player_type');
-    if(type == 'shadow', (
-        _leave_afk(p);
+    // No-op for non-shadowed players
+    if(type != 'shadow', return(null));
 
-        run(str('player %s kill', p));
+    hp = query(p, 'health');
+    // Ignore damage, as long as it's not too much
+    if((hp - amount) > 10, return(null));
 
-        return('cancel');
-    ));
+    // Bail out the player
+    _leave_afk(p);
+    run(str('player %s kill', p));
+    return('cancel');
 );
 
 __on_start() -> (
