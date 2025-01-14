@@ -34,6 +34,8 @@ _glowstone_dust(p, item, b, bp, face) -> (
 		3, 0.2, 0
 	);
 	sound('minecraft:item.brush.brushing.sand', bp, 1, 1, 'block'); // Sound
+
+	'cancel'
 );
 
 _brush(p, item, b, bp, face) -> (
@@ -47,6 +49,8 @@ _brush(p, item, b, bp, face) -> (
 	sound('minecraft:block.composter.ready', bp, 1, 1, 'block');
 
 	set(b, 'air');
+
+	'cancel'
 );
 
 __on_player_right_clicks_block(p, i, hand, block, face, hv) -> (
@@ -62,9 +66,7 @@ __on_player_right_clicks_block(p, i, hand, block, face, hv) -> (
 	bp = pos(block) + global_face_offset:face;
 	b = block(bp);
 
-	call(f, p, item, b, bp, face);
-
-	'cancel'
+	call(f, p, item, b, bp, face)
 );
 
 _glimmer(x, y, z, p) -> (
