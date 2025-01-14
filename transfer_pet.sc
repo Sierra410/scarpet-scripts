@@ -16,7 +16,7 @@ _confirm() -> {
             'r No pets to transfer!
 Right click on a player to stage transfer of leashed pets.'
         ));
-        return(null);
+        return();
     ));
 
     leashed_pets = global_staged_transfer:0;
@@ -53,11 +53,11 @@ Right click on a player to stage transfer of leashed pets.'
 };
 
 __on_player_interacts_with_entity(p, e, h) -> (
-    if(h != 'mainhand', return(null));
-	if(query(e, 'player_type') == null, return(null));
+    if(h != 'mainhand', return());
+	if(query(e, 'player_type') == null, return());
 
     tool = inventory_get('equipment', p, 0);
-	if(tool:0 != 'lead', return(null));
+	if(tool:0 != 'lead', return());
 
     owner_uuid = p~'nbt':'UUID';
     leashed_pets = filter(
@@ -65,7 +65,7 @@ __on_player_interacts_with_entity(p, e, h) -> (
         _~'nbt':'Leash':'UUID' == owner_uuid,
     );
 
-    if(length(leashed_pets) == 0, return('null'));
+    if(length(leashed_pets) == 0, return());
 
     recipient_uuid = e~'nbt':'UUID';
 
