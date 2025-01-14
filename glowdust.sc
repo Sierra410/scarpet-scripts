@@ -77,37 +77,35 @@ _glimmer(x, y, z, p) -> (
 );
 
 global_glimmer_window = 30;
-global_glimmer_distance = [10, 5, 10];
 
 _glimmer_rng(x, y, z, p) -> (
 	schedule(floor(rand(global_glimmer_window)), '_glimmer', x, y, z, p);
 	schedule(floor(rand(global_glimmer_window)), '_glimmer', x, y, z, p);
 );
 
-global_show_dust_loop = false;
 _show_dust(p) -> (
 	item = inventory_get('equipment', p, 0);
-	global_show_dust_loop = (item:0 == 'glowstone_dust');
+	if(item:0 != 'glowstone_dust', return(null));
 
-	if(!global_show_dust_loop, return(null));
-
-	scan(pos(p), global_glimmer_distance, (
+	scan(pos(p), [10, 5, 10], (
 		if(_ == 'light', _glimmer_rng(_x, _y, _z, p));
 	));
-
-	schedule(global_glimmer_window, '_show_dust', p);
 );
 
-_try_show_glowdust(p) -> (
-	if(global_show_dust_loop, return('null'));
+_show_dust_loop() -> (
+	p = player();
+	if(p == null, return(null)); // Break loop if player isn't online
+	schedule(global_glimmer_window, '_show_dust_loop');
 
-	schedule(0, '_show_dust', p);
+	_show_dust(p);
 );
 
-__on_player_switches_slot(p, f, t) -> (
-	_try_show_glowdust(p);
+__on_start() -> (
+	// Start loop the moment script's loaded
+	_show_dust_loop();
 );
 
-__on_player_swaps_hands(p) -> (
-	_try_show_glowdust(p);
+__on_player_connects(p) -> (
+	// Re-start loop fore re-joining players
+	_show_dust_loop();
 );
