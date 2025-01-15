@@ -52,7 +52,7 @@ _interval(p, a, i) -> (
     if(!_supports_interval(a), (
         _error('Only "use" and "attack" can take interval!');
 
-        return(null);
+        return();
     ));
 
     if(i < 1,
@@ -63,14 +63,7 @@ _interval(p, a, i) -> (
 
 // Join the AFK team
 _join_afk(p) -> (
-    team = query(p, 'team');
-
-    if(team != null, (
-        nbt = nbt_storage(global_def_team_storage);
-        put(nbt, query(p, 'uuid'), team);
-        nbt_storage(global_def_team_storage, nbt);
-    ));
-
+    _save_player_team(p, query(p, 'team'));
     team_add(global_afk_team, p);
 );
 
@@ -80,19 +73,15 @@ _leave_afk(p) -> (
 
     if(
         team != global_afk_team,
-        return(null);
+        return();
     );
 
-
-    nbt = nbt_storage(global_def_team_storage);
-    team = get(nbt, query(p, 'uuid'));
-
-    if(team == null, (
-        team_leave(p);
-        return(null);
-    ));
-
-    team_add(team, p);
+    team = _get_player_team(p);
+    if(
+        team != null,
+        team_add(team, p), // Re-join team, if there's a default team
+        team_leave(p), //     or just leave the AFK team
+    );
 );
 
 __on_player_connects(p) -> (
@@ -102,11 +91,11 @@ __on_player_connects(p) -> (
 __on_player_takes_damage(p, amount, source, source_entity) -> (
     type = query(p, 'player_type');
     // No-op for non-shadowed players
-    if(type != 'shadow', return(null));
+    if(type != 'shadow', return());
 
     hp = query(p, 'health');
     // Ignore damage, as long as it's not too much
-    if((hp - amount) > 10, return(null));
+    if((hp - amount) > 10, return());
 
     // Bail out the player
     _leave_afk(p);
@@ -114,10 +103,23 @@ __on_player_takes_damage(p, amount, source, source_entity) -> (
     return('cancel');
 );
 
-__on_start() -> (
-    global_def_team_storage = 'default_team';
-    global_afk_team = 'AFK';
+_load_player_teams() -> (
+    global_player_teams = read_file('player_teams', 'json') || {};
+);
 
+_save_player_team(p, t) -> (
+	put(global_player_teams, query(p, 'uuid'), t);
+	write_file('player_teams', 'json', global_player_teams);
+);
+
+_get_player_team(p) -> (
+	get(global_player_teams, query(p, 'uuid'))
+);
+
+__on_start() -> (
+   _load_player_teams();
+
+    global_afk_team = 'AFK';
     team = team_add(global_afk_team);
     if(team != null, (
         // Configure freshly created team
