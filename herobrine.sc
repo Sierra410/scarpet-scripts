@@ -2,6 +2,19 @@ __config() -> {
     'strict' -> true,
     'stay_loaded' -> true,
     'scope' -> 'global',
+    'command_permission' -> 'ops',
+    'commands' -> {
+        '<players> <message>' -> _(p, m) -> _herobrine_say(p, m),
+    },
+    'arguments' -> {
+		'players' -> {
+            'type' -> 'players',
+        },
+        'message' -> {
+            'type' -> 'text',
+			'suggest' -> [],
+        },
+    },
 };
 
 _mark_player(p) -> (
@@ -13,8 +26,8 @@ _is_marked(p) -> (
 	has(global_marked_players, query(p, 'uuid'))
 );
 
-_vector_len(vec) -> (
-	sqrt((sum(...map(vec, _*_))))
+_vector_len2(vec) -> (
+	(sum(...map(vec, _*_)))
 );
 
 _herobrine_say(to, fmt, ...args) -> (
@@ -39,10 +52,10 @@ _herobrine_greets(p) -> (
 );
 
 __on_player_clicks_block(p, b, f) -> (
-	d = _vector_len((pos(b) - pos(p)));
-	if(d > 100 && !_is_marked(p),
+	d = _vector_len2((pos(b) - pos(p)));
+	if(d > 10000 && !_is_marked(p),
 		_mark_player(p);
-		schedule(70, '_herobrine_warn', p, d);
+		schedule(70, '_herobrine_warn', p, sqrt(d));
 	);
 );
 
