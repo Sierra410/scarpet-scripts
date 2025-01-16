@@ -5,6 +5,7 @@ __config() -> {
 	'commands' -> {
 		'' ->                         _() ->        _print_user_setting(player()),
 		'reset' ->                    _() ->        _del_user_setting(player()),
+		'mute' ->                     _() ->        _set_user_setting(player(), 'None', 0, 0),
 		'<sound> <volume>' ->         _(s, v) ->    _set_user_setting(player(), s, v, 1),
 		'<sound> <volume> <pitch>' -> _(s, v, p) -> _set_user_setting(player(), s, v, p),
     },
