@@ -3,11 +3,11 @@ __config() -> {
     'stay_loaded' -> true,
     'scope' -> 'global',
 	'commands' -> {
-		'' ->                         _() ->        _print_user_setting(player()),
-		'reset' ->                    _() ->        _del_user_setting(player()),
-		'mute' ->                     _() ->        _set_user_setting(player(), 'None', 0, 0),
-		'<sound> <volume>' ->         _(s, v) ->    _set_user_setting(player(), s, v, 1),
-		'<sound> <volume> <pitch>' -> _(s, v, p) -> _set_user_setting(player(), s, v, p),
+		'' ->                             _() ->        _print_user_setting(player()),
+		'reset' ->                        _() ->        _del_user_setting(player()),
+		'mute' ->                         _() ->        _set_user_setting(player(), 'None', 0, 0),
+		'set <sound> <volume>' ->         _(s, v) ->    _set_user_setting(player(), s, v, 1),
+		'set <sound> <volume> <pitch>' -> _(s, v, p) -> _set_user_setting(player(), s, v, p),
     },
     'arguments' -> {
         'sound' -> {
@@ -78,6 +78,8 @@ __on_player_message(p, m) -> (
 	ppos = join(' ', pos(p));
 
     for(player('*'), (
+		if(_ == p, continue()); // Don't notify the sender
+
 		s = _get_user_setting(_);
 		if(s:1 > 0,
 			run(str(
