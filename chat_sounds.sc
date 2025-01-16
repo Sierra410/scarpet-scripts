@@ -75,21 +75,16 @@ _print_user_setting(p) -> (
 );
 
 __on_player_message(p, m) -> (
-	ppos = join(' ', pos(p));
-
-    for(player('*'), (
+    for(player('all'), (
 		if(_ == p, continue()); // Don't notify the sender
 
 		s = _get_user_setting(_);
 		if(s:1 > 0,
+			pos = join(' ', pos(_));
 			run(str(
 				'playsound %s master %s %s %f %f %f',
-				// Subtle directionality. The sound is played at the position
-				// of the message sender, but fixed volume, so it's possible
-				// to hear the direction of the talking player.
-				//                V
-				   s:0,   _,      ppos, s:1,    s:2,   s:1,
-				// Sound, player, pos,  volume, pitch, minVolume
+				   s:0,   _,      pos, s:1,    s:2,   s:1,
+				// Sound, player, pos, volume, pitch, minVolume
 			));
 		);
 	));
