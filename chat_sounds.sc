@@ -89,3 +89,7 @@ __on_player_message(p, m) -> (
 		);
 	));
 );
+
+__on_start() -> (
+	_load_user_settings();
+);
