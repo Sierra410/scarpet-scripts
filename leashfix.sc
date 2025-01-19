@@ -6,15 +6,36 @@ __config() -> {
 
 _leash_fix(e, new) -> (
 	if(
-		new, return(null), // Skip new entities
-		e~'nbt':'Leash' == null, return(null), // Skip unleashed entities
-		e~'nbt':'NoAI' != null, return(null), // Skip entities w/o AI
+		// Skip New Entities
+		new, return(),
+
+		// Skip unleashed entities
+		e~'nbt':'Leash' == null,
+			return(),
+
+		// Skip entities with NoAI that were _not_ lobotomized by us
+		(
+			e~'nbt':'NoAI' != null)
+			&& !query(e, 'has_scoreboard_tag', 'LEASHFIX'
+		),
+			return(),
 	);
 
 	modify(e, 'ai', false); // Disable AI
-	schedule(100, _(outer(e)) -> ( // Re-enable AI 5 seconds later
-		modify(e, 'ai', true);
-	));
+	modify(e, 'tag', 'LEASHFIX'); // Tag the entity to indicate it was us
+
+	schedule(100, _(id) -> ( // Re-enable AI 5 seconds later
+		e = entity_id(id);
+		if(e == null,
+			logger('error', str(
+				'Lobotomized entity %s disappeared before being re-brained!',
+				id,
+			));
+			return();
+		);
+		modify(e, 'clear_tag', 'LEASHFIX'); // We're done with this entity
+		modify(e, 'ai', true); // Re-Enable AI
+	), e~'uuid');
 );
 
 entity_load_handler('cat', _(e, new) -> _leash_fix(e, new));
