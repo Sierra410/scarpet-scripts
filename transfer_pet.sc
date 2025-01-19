@@ -14,7 +14,7 @@ _confirm() -> {
     if(global_staged_transfer == null, (
         print(format(
             'r No pets to transfer!
-Right click on a player to stage transfer of leashed pets.'
+Right click on a player while holding a leash to stage transfer of leashed pets.'
         ));
         return();
     ));
@@ -41,6 +41,15 @@ Right click on a player to stage transfer of leashed pets.'
             transferred,
             new_owner_name,
         )));
+
+        print(
+            new_owner_name,
+            format(str(
+                'l %s transferred %s to you!',
+                player(),
+                transferred,
+            ),
+        ));
     ));
 
     missing = length(leashed_pets) - length(transferred);
