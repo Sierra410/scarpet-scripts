@@ -63,7 +63,13 @@ _interval(p, a, i) -> (
 
 // Join the AFK team
 _join_afk(p) -> (
-    _save_player_team(p, query(p, 'team'));
+    team = query(p, 'team');
+
+    if(
+        team != global_afk_team,
+        _save_player_team(p, team),
+    );
+
     team_add(global_afk_team, p);
 );
 
@@ -85,7 +91,11 @@ _leave_afk(p) -> (
 );
 
 __on_player_connects(p) -> (
-    _leave_afk(p);
+    if(
+        query(p, 'player_type') == 'shadow',
+        _join_afk(p),
+        _leave_afk(p),
+    );
 );
 
 __on_player_takes_damage(p, amount, source, source_entity) -> (
@@ -98,7 +108,6 @@ __on_player_takes_damage(p, amount, source, source_entity) -> (
     if((hp - amount) > 10, return());
 
     // Bail out the player
-    _leave_afk(p);
     run(str('player %s kill', p));
     return('cancel');
 );
