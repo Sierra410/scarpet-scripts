@@ -73,7 +73,8 @@ __on_start() -> (
 					_~'_trapdoor$' ||
 					_~'_fence_gate$' ||
 					_~'_button$' ||
-					_~'_sign$'
+					_~'_sign$' ||
+					_~'_shulker_box$'
 					// pots are used rarely enough and are already flaky enough
 					// to not matter. Fewer comparisons = faster code anyway.
 					// _~'^potted_'
