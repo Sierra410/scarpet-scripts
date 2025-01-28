@@ -94,7 +94,7 @@ _get_user_setting(p, key) -> (
 );
 
 global_default_user_settings = {
-	'selfping' -> false,
+	'selfping' -> true,
 	// Sound, Volume, Pitch
 	'chat' -> ['minecraft:block.amethyst_cluster.fall', 1, 2],
 	'join' -> ['minecraft:entity.player.levelup', 0.5, 2],
