@@ -55,12 +55,21 @@ __on_player_right_clicks_block(p, i, hand, block, face, hitvec) -> (
 	_should_ignore(block) || 'cancel'
 );
 
+global_last_used = {};
 __on_player_uses_item(p, i, hand) -> (
-	if(
-		i:0 == 'firework_rocket'
-			&& has(i:2, 'Fireworks', 'Explosions'),
-		'cancel'
-	)
+	if(i:0 != 'firework_rocket', return());
+
+	if(has(i:2, 'Fireworks', 'Explosions'),
+		return('cancel'),
+	);
+
+	// Prevent rocket spam
+	// Allow 1 rocket use every 4 game ticks, at most
+	t = tick_time();
+	if((t - global_last_used:p) < 4,
+		return('cancel'),
+	);
+	global_last_used:p = t;
 );
 
 __on_start() -> (
