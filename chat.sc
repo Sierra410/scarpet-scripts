@@ -6,7 +6,8 @@ __config() -> {
 
 // Write Player Activity
 _wpa(...args) -> (
-    write_file('player_activity', 'text', join(' ', args));
+    iso = str('%04d-%02d-%02dT%02d:%02d:%02d', ...convert_date(unix_time()));
+    write_file('player_activity', 'text', join(' ', iso, ...args));
 );
 
 __on_player_message(p, m) -> (
