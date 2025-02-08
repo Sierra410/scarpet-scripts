@@ -8,39 +8,30 @@ _log(... args) -> (
 );
 
 _get_enchantment(item, ench) -> (
-	if(ench == null, return(null));
-
-	if(length(item) != 3, return(null));
-
-	enchs = item:2:'Enchantments';
-	if(enchs == null, return(null));
-
-	ench = str('[{id:"%s"}]', ench);
-
-	enchs:ench
-);
-
-_has_enchantment(item, ench) -> (
-	_get_enchantment(item, ench) != null
+	item:2:'components':'minecraft:enchantments':'levels':ench
 );
 
 __on_player_interacts_with_entity(p, e, h) -> (
-	if(h != 'mainhand', return(null));
-	if(query(e, 'player_type') == null, return(null));
+	if(query(e, 'player_type') == null, return());
 
-	tool = inventory_get('equipment', p, 0);
-	if(tool:0 != 'shears', return(null));
+	if(h == 'mainhand',
+		tool_slot = 0, // Current slot
+		tool_slot = 5, // Offhand slot
+	);
+
+	tool = inventory_get('equipment', p, tool_slot);
+	if(tool:0 != 'shears', return());
 
 	hat = inventory_get('equipment', e, 4);
-	if(hat:0 != 'carved_pumpkin', return(null));
+	if(hat:0 != 'carved_pumpkin', return());
 
-	hat_has_binding = _has_enchantment(hat, 'minecraft:binding_curse');
+	hat_has_binding = _get_enchantment(hat, 'minecraft:binding_curse') != null;
 	tool_break_chance = 1 / (
 		_get_enchantment(tool, 'minecraft:unbreaking'):'lvl' + 1
 	);
 
 	// Damage Shears
-	dmg = tool:2:'Damage';
+	dmg = tool:2:'components':'minecraft:damage';
 	if(
 		hat_has_binding,
 		dmg += 24 * tool_break_chance, // Extra damage, if the pumpkin's cursed
@@ -56,10 +47,12 @@ __on_player_interacts_with_entity(p, e, h) -> (
 		tool:1 += -1;
 	));
 
-	tool:2:'Damage' = dmg;
+	nbt = tool:2; // Because tool:2 can't be used as value in put()
+	put(nbt, 'components.minecraft:damage', dmg);
+	tool:2 = nbt;
 
 	// Replace shears with damaged version
-	inventory_set('equipment', p, 0, tool:1, tool:0, tool:2);
+	inventory_set('equipment', p, tool_slot, tool:1, tool:0, tool:2);
 
 	// Play sound
 	sound('entity.snow_golem.shear', query(e, 'pos'), 1, 1, 'player');
