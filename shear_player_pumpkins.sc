@@ -1,11 +1,8 @@
 __config() -> {
     'strict' -> true,
     'stay_loaded' -> true,
+	'scope' -> 'global',
 };
-
-_log(... args) -> (
-    print(format('c ' + join(' ', args)));
-);
 
 _get_enchantment(item, ench) -> (
 	item:2:'components':'minecraft:enchantments':'levels':ench
