@@ -12,8 +12,12 @@ _leash(master, pet) -> (
 	))
 );
 
+global_leashable = [
+	'villager'
+];
+
 __on_player_interacts_with_entity(p, e, h) -> (
-	if(e != 'Villager', return());
+	if((e~'type' ~ global_leashable) == null, return());
 	if(e~'nbt':'leash', return());
 
 	hand = null;
@@ -32,5 +36,5 @@ __on_player_interacts_with_entity(p, e, h) -> (
 		inventory_set('equipment', player(), hand, item:1-1);
 	);
 
-	'cancel';
+	'cancel'
 );
