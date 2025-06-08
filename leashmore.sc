@@ -13,11 +13,24 @@ _leash(master, pet) -> (
 );
 
 global_leashable = [
-	'villager'
+	// villagers
+	'villager',
+	'wandering_trader',
+	// animals
+	'turtle',
+	'bat',
+	'pufferfish',
+	'silverfish',
+	// neutral-ish
+	'spider',
+	'slime',
+	'enderman',
+	'piglin',
+	'creaking',
 ];
 
 __on_player_interacts_with_entity(p, e, h) -> (
-	if((e~'type' ~ global_leashable) == null, return());
+	if((global_leashable ~ (e~'type')) == null, return());
 	if(e~'nbt':'leash', return());
 
 	hand = null;
