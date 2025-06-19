@@ -1,7 +1,7 @@
 __config() -> {
     'strict' -> true,
     'stay_loaded' -> true,
-    'scope' -> 'global',
+    'scope' -> 'player',
 };
 
 _say(...args) -> (
@@ -23,14 +23,60 @@ _update_block(b, state) -> (
 
 _sfmt(arg) -> (
 	t = type(arg);
-	if(t == 'bool',
-		arg && format('bl True') || format('br False'),
+	if(
+		t == 'bool', arg && format('bl True') || format('br False'),
+		t == 'number', format('bc '+str(arg)),
+		t == 'list', format('b '+str(arg)),
 		str(arg),
 	)
 );
 
 _action_msg(p, ...msg) -> (
 	display_title(p, 'actionbar', sum(...map(msg, _sfmt(_))), 0, 10, 0);
+);
+
+global_awl_leaves = 'oak_leaves'; // Auto-waterlogging leaves
+global_waterlog_leaves = false;
+
+global_bell_block = 'yellow_stained_glass';
+global_bell_last_rang = 0;
+global_bell = null;
+global_bell_powered = false;
+
+_bell_track(b) -> (
+	if(global_bell == null, schedule(0, '_bell_tick'));
+
+	global_bell_last_rang = tick_time();
+	global_bell = pos(b);
+
+	_action_msg(player(), 'Tracking the bell at ', pos(b));
+);
+
+_bell_show_ticks() -> (
+	_action_msg(
+		player(),
+		tick_time() - global_bell_last_rang,
+		' ticks since last rang',
+	);
+);
+
+_bell_tick() -> (
+	if(block(global_bell) != global_bell_block;, (
+		_action_msg(player(), 'No longer tracking the bell at ', global_bell);
+		global_bell = null;
+		return();
+	));
+
+	schedule(0, '_bell_tick');
+
+	powered = power(global_bell) > 0;
+	if(powered == global_bell_powered, return());
+
+	global_bell_powered = powered;
+	if(powered, (
+		_bell_show_ticks();
+		global_bell_last_rang = tick_time();
+	));
 );
 
 // Magic actions on RMB
@@ -57,21 +103,26 @@ __on_player_right_clicks_block(p, i, h, b, face, hitvec) -> (
 			l = bool(block_state(b, 'lit'));
 			_update_block(b, {'lit'->!l});
 		),
+		b == global_bell_block, (
+			if(global_bell != pos(b),
+				_bell_track(b),
+				_bell_show_ticks(),
+			);
+		),
 		return(); // No cancel
 	);
 
 	'cancel'
 );
 
-global_awl_leaves = 'oak_leaves'; // Auto-waterlogging leaves
-global_waterlog_leaves_for = {};
 __on_player_places_block(p, i, h, b) -> (
 	if(query(p, 'gamemode_id') != 1,
 		return(),
 	);
 
-	if(b == global_awl_leaves && global_waterlog_leaves_for:p,
-		_update_block(b, {'waterlogged'->true}),
+	if(
+		b == global_awl_leaves && global_waterlog_leaves,
+			_update_block(b, {'waterlogged'->true}),
 	);
 );
 
