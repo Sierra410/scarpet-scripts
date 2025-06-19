@@ -79,15 +79,20 @@ _bell_tick() -> (
 	));
 );
 
-// Magic actions on RMB
 __on_player_right_clicks_block(p, i, h, b, face, hitvec) -> (
 	if(
 		h != 'mainhand'
-		|| query(p, 'gamemode_id') != 1
-		|| query(p, 'sneaking'),
+		|| query(p, 'gamemode_id') != 1,
 		return(),
 	);
 
+	if(query(p, 'sneaking'),
+		_magic_crouch_clicks(p, i, h, b, face, hitvec),
+		_magic_clicks(p, i, h, b, face, hitvec),
+	)
+);
+
+_magic_clicks(p, i, h, b, face, hitvec) -> (
 	if(
 		// Cycle composter level
 		i:0 == 'composter' && b == 'composter', (
@@ -108,6 +113,22 @@ __on_player_right_clicks_block(p, i, h, b, face, hitvec) -> (
 				_bell_track(b),
 				_bell_show_ticks(),
 			);
+		),
+		return(); // No cancel
+	);
+
+	'cancel'
+);
+
+_magic_crouch_clicks(p, i, h, b, face, hitvec) -> (
+	if(
+		i:0 == 'target', (
+			if(
+				b == 'iron_block',
+					set(b, 'target'),
+				b == 'target',
+					set(b, 'iron_block')
+			)
 		),
 		return(); // No cancel
 	);
