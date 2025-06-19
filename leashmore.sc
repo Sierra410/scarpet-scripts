@@ -1,14 +1,14 @@
 __config() -> {
     'strict' -> true,
     'stay_loaded' -> true,
-    'scope' -> 'player',
+    'scope' -> 'global',
 };
 
-_leash(master, pet) -> (
+_leash(leader, follower) -> (
 	run(str(
 		'data modify entity %s leash.UUID set from entity %s UUID',
-		query(pet, 'uuid'),
-		query(master, 'uuid')
+		query(follower, 'uuid'),
+		query(leader, 'uuid')
 	))
 );
 
@@ -35,7 +35,7 @@ __on_player_interacts_with_entity(p, e, h) -> (
 
 	hand = null;
 	for([0, -1], (
-		item = inventory_get('equipment', player(), _);
+		item = inventory_get('equipment', p, _);
 		if(item:0 == 'lead', (
 			hand = _;
 			break();
@@ -46,7 +46,7 @@ __on_player_interacts_with_entity(p, e, h) -> (
 
 	_leash(p, e);
 	if(query(p, 'gamemode_id') != 1,
-		inventory_set('equipment', player(), hand, item:1-1);
+		inventory_set('equipment', p, hand, item:1-1);
 	);
 
 	'cancel'
