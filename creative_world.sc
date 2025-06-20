@@ -2,10 +2,15 @@ __config() -> {
     'strict' -> true,
     'stay_loaded' -> true,
     'scope' -> 'player',
+	'libraries' -> [{
+		'source' -> 'libchatter.sc'
+	}],
 };
 
-_say(...args) -> (
-	print(player('all'), join(' ', args));
+import('libchatter',
+	'action_msg',
+	'chat_msg',
+	'echo',
 );
 
 _run_as_at(p, ...cmd) -> (
@@ -19,20 +24,12 @@ _run_as_at_eyes(p, ...cmd) -> (
 _update_block(b, state) -> (
 	set(b, b, state);
 	for(neighbours(b), update(_));
-);
 
-_sfmt(arg) -> (
-	t = type(arg);
-	if(
-		t == 'bool', arg && format('bl True') || format('br False'),
-		t == 'number', format('bc '+str(arg)),
-		t == 'list', format('b '+str(arg)),
-		str(arg),
-	)
-);
-
-_action_msg(p, ...msg) -> (
-	display_title(p, 'actionbar', sum(...map(msg, _sfmt(_))), 0, 10, 0);
+	for([[2, 0, 0], [-2, 0, 0], [0, 0, 2], [0, 0, -2]], (
+		p = pos(b) + _;
+		c = block(p);
+		if(c == 'comparator', update(c));
+	));
 );
 
 global_awl_leaves = 'oak_leaves'; // Auto-waterlogging leaves
@@ -49,20 +46,21 @@ _bell_track(b) -> (
 	global_bell_last_rang = tick_time();
 	global_bell = pos(b);
 
-	_action_msg(player(), 'Tracking the bell at ', pos(b));
+	action_msg(player(), 'Tracking the bell at ', pos(b));
 );
 
 _bell_show_ticks() -> (
-	_action_msg(
+	action_msg(
 		player(),
+		format('br '+power(global_bell)),
+		'  ',
 		tick_time() - global_bell_last_rang,
-		' ticks since last rang',
 	);
 );
 
 _bell_tick() -> (
 	if(block(global_bell) != global_bell_block;, (
-		_action_msg(player(), 'No longer tracking the bell at ', global_bell);
+		action_msg(player(), 'No longer tracking the bell at ', global_bell);
 		global_bell = null;
 		return();
 	));
@@ -80,16 +78,89 @@ _bell_tick() -> (
 );
 
 __on_player_right_clicks_block(p, i, h, b, face, hitvec) -> (
-	if(
-		h != 'mainhand'
-		|| query(p, 'gamemode_id') != 1,
+	if(query(p, 'gamemode_id') != 1,
 		return(),
 	);
 
-	if(query(p, 'sneaking'),
-		_magic_crouch_clicks(p, i, h, b, face, hitvec),
-		_magic_clicks(p, i, h, b, face, hitvec),
+	if(h == 'mainhand',
+		if(query(p, 'sneaking'),
+			_magic_clicks(p, i, h, b, face, hitvec),
+		),
+		_place_replacing(p, i, h, b, face, hitvec);
 	)
+);
+
+global_must_support = [
+	'redstone_wire',
+	'redstone_torch',
+	'repeater',
+	'comparator',
+];
+
+_must_be_supported(b) -> (
+	(global_must_support ~ b) != null
+	|| block_tags(b, 'pressure_plates')
+	|| block_tags(b, 'rails')
+	|| (
+		(b == 'lever' || block_tags(b, 'buttons'))
+		&& block_state(b, 'face') == 'floor'
+	)
+);
+
+global_inverted_facing = [
+	'dropper',
+	'dispenser',
+	'piston',
+	'sticky_piston',
+];
+
+_has_inverted_facing(b) -> (
+	(global_inverted_facing ~ b) != null
+);
+
+_which_half(b) -> (
+	above = block(pos(b) + [0, 1, 0]);
+	if(
+		hitvec:1 > 0.5 || _must_be_supported(above),
+		'top',
+		'bottom',
+	)
+);
+
+_place_replacing(p, i, h, b, face, hitvec) -> (
+	if(i == null, return());
+
+	try(
+		nb = block(i:0),
+		'unknown_block',
+		return(),
+	);
+
+	state = {};
+
+	// Special case
+	if(nb == 'target' && b == 'target',
+		set(b, 'iron_block', state);
+		return('cancel');
+	);
+
+	if(
+		block_tags(nb, 'slabs'), (
+			state:'type' = _which_half(b);
+		),
+		block_tags(nb, 'stairs'), (
+			state:'half' = _which_half(b);
+		)
+	);
+
+	if((block_state(nb)~'facing') != null, (
+		order = if(_has_inverted_facing(nb), -1, 0);
+		state:'facing' = query(p, 'facing', order);
+	));
+
+	set(b, nb, state);
+
+	'cancel'
 );
 
 _magic_clicks(p, i, h, b, face, hitvec) -> (
@@ -102,7 +173,7 @@ _magic_clicks(p, i, h, b, face, hitvec) -> (
 			if(l == 7, l = 8); // 7 always transforms to 8 anyway
 
 			_update_block(b, {'level'->l});
-			_action_msg(p, l);
+			action_msg(p, l);
 		),
 		(b ~'copper_bulb$') != null, (
 			l = bool(block_state(b, 'lit'));
@@ -113,22 +184,6 @@ _magic_clicks(p, i, h, b, face, hitvec) -> (
 				_bell_track(b),
 				_bell_show_ticks(),
 			);
-		),
-		return(); // No cancel
-	);
-
-	'cancel'
-);
-
-_magic_crouch_clicks(p, i, h, b, face, hitvec) -> (
-	if(
-		i:0 == 'target', (
-			if(
-				b == 'iron_block',
-					set(b, 'target'),
-				b == 'target',
-					set(b, 'iron_block')
-			)
 		),
 		return(); // No cancel
 	);
@@ -152,7 +207,7 @@ __on_player_breaks_block(p, b) -> (
 		return(),
 	);
 
-	if(b == global_awl_leaves && global_waterlog_leaves_for:p,
+	if(b == global_awl_leaves && global_waterlog_leaves,
 		set(b, b, {'waterlogged'->'false'}),
 	);
 );
@@ -186,9 +241,8 @@ entity_load_handler('item', _(e, new) -> (
 			);
 		),
 		item == global_awl_leaves, (
-			waterlog = !global_waterlog_leaves_for:p;
-			global_waterlog_leaves_for:p = waterlog;
-			_action_msg(p, 'Auto-waterlog leaves: ', waterlog);
+			global_waterlog_leaves = !global_waterlog_leaves;
+			action_msg(p, 'Auto-waterlog leaves: ', global_waterlog_leaves);
 
 			if(query(p, 'holds') == null,
 				inventory_set('equipment', p, 0, 1, global_awl_leaves),
