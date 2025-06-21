@@ -82,14 +82,12 @@ _bell_tick() -> (
 __on_player_right_clicks_block(p, i, h, b, face, hitvec) -> (
 	if(
 		h != 'mainhand'
-		|| query(p, 'gamemode_id') != 1,
+		|| query(p, 'gamemode_id') != 1
+		|| query(p, 'sneaking'),
 			return()
 	);
 
-	if(
-		!query(p, 'sneaking'),
-		_magic_clicks(p, i, h, b, face, hitvec)
-	) || if(
+	_magic_clicks(p, i, h, b, face, hitvec) || if(
 		global_place_replacing,
 		_place_replacing(p, i, h, b, face, hitvec)
 	)
@@ -112,15 +110,23 @@ _must_be_supported(b) -> (
 	)
 );
 
-global_inverted_facing = [
+global_faces_player_when_placed = [
 	'dropper',
 	'dispenser',
 	'piston',
 	'sticky_piston',
 ];
 
-_has_inverted_facing(b) -> (
-	(global_inverted_facing ~ b) != null
+_faces_player_when_placed(b) -> (
+	(global_faces_player_when_placed ~ b) != null
+);
+
+_facing_horizontal_only(p, reverse) -> (
+	for((reverse && range(-1, -7, -1) || range(6)),
+		f = query(p, 'facing', _);
+
+		if(f != 'up' && f != 'down', return(f));
+	)
 );
 
 _which_half(b, hitvec) -> (
@@ -160,13 +166,11 @@ _place_replacing(p, i, h, b, face, hitvec) -> (
 
 	state = {};
 
-	// Special case
-	if(nb == 'target' && b == 'target',
-		set(b, 'iron_block', state);
-		return('cancel');
-	);
-
 	if(
+		nb == 'target' && b == 'target', (
+			set(b, 'iron_block', state);
+			return('cancel');
+		),
 		block_tags(nb, 'slabs'), (
 			if(block_tags(b, 'slabs'),
 				state:'type' = block_state(b):'type',
@@ -175,13 +179,54 @@ _place_replacing(p, i, h, b, face, hitvec) -> (
 		),
 		block_tags(nb, 'stairs'), (
 			state:'half' = _which_half(b, hitvec);
-		)
-	);
+			state:'facing' = _facing_horizontal_only(p, false);
+		),
+		block_tags(nb, 'trapdoors'), (
+			if(block_tags(b, 'trapdoors'), (
+				set(b, nb, block_state(b));
+			), (
+				state:'facing' = _facing_horizontal_only(p, true);
+				state:'half' = _which_half(b, hitvec);
+				echo(state);
+				set(b, nb, state);
+			));
 
-	if((block_state(nb)~'facing') != null, (
-		order = if(_has_inverted_facing(nb), -1, 0);
-		state:'facing' = query(p, 'facing', order);
-	));
+			return('cancel');
+		),
+		_faces_player_when_placed(nb), (
+			state:'facing' = query(p, 'facing', -1);
+		),
+		block_tags(nb, 'beds'), (
+			// Beds can only replace beds
+			// Trying to replace any random block doesn't really work
+			if(!block_tags(b, 'beds'), return());
+
+			facing = block_state(b, 'facing');
+			if(block_state(b, 'part') == 'foot', (
+				off = 1;
+				part_this = 'foot';
+				part_other = 'head';
+			),(
+				off = -1;
+				part_this = 'head';
+				part_other = 'foot';
+			));
+
+			without_updates((
+				set(
+					b, nb,
+					{'facing'->facing, 'part'->part_this},
+				);
+
+				set(
+					pos_offset(b, facing, off), nb,
+					{'facing'->facing, 'part'->part_other},
+				);
+			));
+
+			return('cancel');
+		),
+	);
 
 	set(b, nb, state);
 
@@ -282,24 +327,22 @@ entity_load_handler('item', _(e, new) -> (
 // _benchmark(func) -> (
 // 	t0 = time();
 // 	call(func, 1000000);
-// 	_say('took', time() - t0);
+// 	echo('took', time() - t0);
 // );
 
 // __on_start() -> (
-// 	b = block(-178, 94, -11);
+// 	b = 'comparator';
 
-// 	_say(bool(b~'_leaves$'));
 // 	_benchmark(_(outer(b), n)->(
-// 		for(range(n), bool(b~'_leaves$'));
+// 		for(range(n), ([
+// 			'redstone_wire',
+// 			'redstone_torch',
+// 			'repeater',
+// 			'comparator',
+// 		] ~ b) != null);
 // 	));
 
-// 	_say(_in_list(global_leaves, b));
 // 	_benchmark(_(outer(b), n)->(
-// 		for(range(n), _in_list(global_leaves, b));
-// 	));
-
-// 	_say((global_leaves ~ b) != null);
-// 	_benchmark(_(outer(b), n)->(
-// 		for(range(n), (global_leaves ~ b) != null);
+// 		for(range(n), (global_must_support ~ b) != null);
 // 	));
 // );
