@@ -72,7 +72,7 @@ _clearinv_volume(f, t) -> (
 
 	chat_msg(
 		player(),
-		b, '%%b', ' block', bs, ' cleared\n  ',
-		'%%g', '(', i, ' item', is, ' removed from ', s, ' slot', ss, ')',
+		b, '%%%b', ' block', bs, ' cleared\n  ',
+		'%%%g', '(', i, ' item', is, ' removed from ', s, ' slot', ss, ')',
 	);
 );
