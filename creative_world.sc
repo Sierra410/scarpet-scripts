@@ -40,6 +40,8 @@ global_bell_last_rang = 0;
 global_bell = null;
 global_bell_powered = false;
 
+global_place_replacing = false;
+
 _bell_track(b) -> (
 	if(global_bell == null, schedule(0, '_bell_tick'));
 
@@ -78,15 +80,18 @@ _bell_tick() -> (
 );
 
 __on_player_right_clicks_block(p, i, h, b, face, hitvec) -> (
-	if(query(p, 'gamemode_id') != 1,
-		return(),
+	if(
+		h != 'mainhand'
+		|| query(p, 'gamemode_id') != 1,
+			return()
 	);
 
-	if(h == 'mainhand',
-		if(query(p, 'sneaking'),
-			_magic_clicks(p, i, h, b, face, hitvec),
-		),
-		_place_replacing(p, i, h, b, face, hitvec);
+	if(
+		!query(p, 'sneaking'),
+		_magic_clicks(p, i, h, b, face, hitvec)
+	) || if(
+		global_place_replacing,
+		_place_replacing(p, i, h, b, face, hitvec)
 	)
 );
 
@@ -118,13 +123,27 @@ _has_inverted_facing(b) -> (
 	(global_inverted_facing ~ b) != null
 );
 
-_which_half(b) -> (
+_which_half(b, hitvec) -> (
 	above = block(pos(b) + [0, 1, 0]);
 	if(
 		hitvec:1 > 0.5 || _must_be_supported(above),
 		'top',
 		'bottom',
 	)
+);
+
+__on_player_swaps_hands(p) -> (
+	h = query(p, 'holds', 'mainhand');
+	try(
+		nb = block(h:0),
+		'unknown_block',
+		return(),
+	);
+
+	global_place_replacing = !global_place_replacing;
+	action_msg(p, 'Block-replacing mode: ', global_place_replacing);
+
+	'cancel';
 );
 
 _place_replacing(p, i, h, b, face, hitvec) -> (
@@ -146,10 +165,13 @@ _place_replacing(p, i, h, b, face, hitvec) -> (
 
 	if(
 		block_tags(nb, 'slabs'), (
-			state:'type' = _which_half(b);
+			if(block_tags(b, 'slabs'),
+				state:'type' = block_state(b):'type',
+				state:'type' = _which_half(b, hitvec),
+			)
 		),
 		block_tags(nb, 'stairs'), (
-			state:'half' = _which_half(b);
+			state:'half' = _which_half(b, hitvec);
 		)
 	);
 
