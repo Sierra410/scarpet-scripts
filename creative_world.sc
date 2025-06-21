@@ -134,6 +134,9 @@ _which_half(b, hitvec) -> (
 
 __on_player_swaps_hands(p) -> (
 	h = query(p, 'holds', 'mainhand');
+
+	if(h == null, return());
+
 	try(
 		nb = block(h:0),
 		'unknown_block',
