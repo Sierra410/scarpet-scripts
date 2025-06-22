@@ -18,8 +18,8 @@ __config() -> {
 };
 
 import('libchatter',
-	'chat_msg',
-	'say',
+	'player_msg',
+	'msg',
 );
 
 _update_comparators(b) -> (
@@ -70,7 +70,7 @@ _clearinv_volume(f, t) -> (
 	ss = if(s == 1, '', 's');
 	is = if(i == 1, '', 's');
 
-	chat_msg(
+	player_msg(
 		player(),
 		b, '%%%b', ' block', bs, ' cleared\n  ',
 		'%%%g', '(', i, ' item', is, ' removed from ', s, ' slot', ss, ')',
