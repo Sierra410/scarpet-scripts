@@ -4,13 +4,9 @@ __config() -> {
 	'scope' -> 'player',
 };
 
-__on_start() -> (
-	schedule(rand(20), '_tick');
-);
-
 global_looking_at = null;
 
-_tick() -> (
+__on_tick() -> (
 	p = player();
 	if(p == null, return());
 
@@ -29,8 +25,6 @@ _tick() -> (
 	);
 
 	global_looking_at = looking_at;
-
-	schedule(0, '_tick');
 );
 
 _on_looked_at_block(p, b) -> (
