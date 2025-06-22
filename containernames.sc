@@ -8,6 +8,8 @@ __on_start() -> (
 	schedule(rand(20), '_tick');
 );
 
+import('libchatter', 'msg');
+
 global_looking_at = null;
 
 _tick() -> (
@@ -68,6 +70,40 @@ _can_rename(b) -> (
 	(global_can_rename ~ b) != null
 );
 
+_rename_block(b, n) -> (
+	run(str(
+		'data merge block %d %d %d {CustomName:\'%s\'}',
+		...pos(b),
+		n,
+	));
+);
+
+_get_chest_second_half(b) -> (
+	if(b != 'chest', return(null));
+
+	t = block_state(b):'type';
+	if(
+		t == 'left', d = 1,
+		t == 'right', d = -1,
+		return(null)
+	);
+
+	f = block_state(b):'facing';
+	if(
+		f == 'north', o = [1*d, 0, 0],
+		f == 'south', o = [-1*d, 0, 0],
+		f == 'east', o = [0, 0, 1*d],
+		f == 'west', o = [0, 0, -1*d],
+		return(null),
+	);
+
+	nb = block(pos(b) + o);
+	if(nb == 'chest',
+		nb,
+		null,
+	)
+);
+
 _rewrite_name(p, b) -> (
 	_on_ui_interact(s, p, a, d, outer(b)) -> (
 		if(d:'slot' != 2, return('cancel'));
@@ -83,11 +119,12 @@ _rewrite_name(p, b) -> (
 
 			nn = i:2:'components':'minecraft:custom_name';
 
-			run(str(
-				'data merge block %d %d %d {CustomName:\'%s\'}',
-				...pos(b),
-				nn,
-			));
+			_rename_block(b, nn);
+			sh = _get_chest_second_half(b);
+			msg(sh);
+			if(sh != null,
+				_rename_block(sh, nn);
+			);
 
 			sound(
 				'minecraft:entity.villager.work_cartographer',
