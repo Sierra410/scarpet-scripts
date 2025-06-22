@@ -49,7 +49,7 @@ _fmt_list(l, conf) -> (
 
 	fmtd = [bropen];
 	for(l, (
-		fmtd += _fmt_arg(_, conf);
+		fmtd += _fmt_arg(_, conf, true);
 		fmtd += comma;
 	));
 
@@ -58,7 +58,7 @@ _fmt_list(l, conf) -> (
 	sum(...fmtd)
 );
 
-_fmt_arg(arg, conf) -> (
+_fmt_arg(arg, conf, last) -> (
 	t = type(arg);
 	if(
 		t == 'text', arg,
@@ -70,7 +70,7 @@ _fmt_arg(arg, conf) -> (
 			format(conf:'def_fmt'+str('\'%s\'', arg)),
 			format(conf:'def_fmt'+str(arg)),
 		)
-	)
+	) + if(last, '', conf:'sep')
 );
 
 // Formats a list of aguments. Passing an argument like '%%<target>[value]' will
@@ -87,29 +87,32 @@ _fmt(...args) -> (
 		'def_fmt' -> 'w ',
 		'indent' -> false,
 		'quote' -> false,
+		'sep' -> ' ',
 	};
 
+	last = length(args) - 1;
 	sum(...map(args, (
-		if(_ ~ '^%%',
+		if(type(_) == 'string' && _ ~ '^%%',
 			if(
 				_ == '%%I', conf:'indent' = true,
 				_ == '%%i', conf:'indent' = false,
 				_ == '%%Q', conf:'quote' = true,
 				_ == '%%q', conf:'quote' = false,
-				conf:'def_fmt' = slice(_, 2)+' ';
+				_ ~ '^%%s', conf:'sep' = slice(_, 3),
+				_ ~ '^%%%',	conf:'def_fmt' = slice(_, 3)+' ';
 			);
 			continue();
 		);
 
-		_fmt_arg(_, conf)
+		_fmt_arg(_, conf, _i == last)
 	)))
 );
 
-echo(...msg) -> (
-	chat_msg(player('all'), ...msg)
+msg(...msg) -> (
+	player_msg(player('all'), ...msg)
 );
 
-chat_msg(p, ...msg) -> (
+player_msg(p, ...msg) -> (
 	print(p, _fmt('%%I', ...msg));
 );
 
