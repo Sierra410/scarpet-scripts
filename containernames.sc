@@ -119,7 +119,6 @@ _rewrite_name(p, b) -> (
 
 			_rename_block(b, nn);
 			sh = _get_chest_second_half(b);
-			msg(sh);
 			if(sh != null,
 				_rename_block(sh, nn);
 			);
