@@ -8,8 +8,6 @@ __on_start() -> (
 	schedule(rand(20), '_tick');
 );
 
-import('libchatter', 'msg');
-
 global_looking_at = null;
 
 _tick() -> (
