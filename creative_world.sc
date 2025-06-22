@@ -9,8 +9,8 @@ __config() -> {
 
 import('libchatter',
 	'action_msg',
-	'chat_msg',
-	'echo',
+	'player_msg',
+	'msg',
 );
 
 _run_as_at(p, ...cmd) -> (
@@ -110,6 +110,16 @@ _must_be_supported(b) -> (
 	)
 );
 
+_cant_replace_blocks(b) -> (
+	b == 'lever'
+	|| block_tags(b, 'buttons')
+	|| _must_be_supported(b)
+);
+
+_can_replace(b, nb) -> (
+	_cant_replace_blocks(b) == _cant_replace_blocks(nb)
+);
+
 global_faces_player_when_placed = [
 	'dropper',
 	'dispenser',
@@ -164,6 +174,8 @@ _place_replacing(p, i, h, b, face, hitvec) -> (
 		return(),
 	);
 
+	if(!_can_replace(b, nb), return());
+
 	state = {};
 
 	if(
@@ -187,7 +199,6 @@ _place_replacing(p, i, h, b, face, hitvec) -> (
 			), (
 				state:'facing' = _facing_horizontal_only(p, true);
 				state:'half' = _which_half(b, hitvec);
-				echo(state);
 				set(b, nb, state);
 			));
 
