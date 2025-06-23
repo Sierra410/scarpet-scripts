@@ -1,15 +1,20 @@
 __config() -> {
     'strict' -> true,
     'stay_loaded' -> true,
-	'scope' -> 'player',
+	'scope' -> 'global',
 };
 
-global_looking_at = null;
+global_looking_at = {};
 
 __on_tick() -> (
-	p = player();
-	if(p == null, return());
+	for(player('all'), _on_tick_player(_));
+);
 
+__on_player_disconnects(p, r) -> (
+	delete(global_looking_at, p);
+);
+
+_on_tick_player(p) -> (
 	looking_at = query(p, 'trace');
 	if(type(looking_at) != 'block',
 		looking_at = null;
@@ -17,14 +22,14 @@ __on_tick() -> (
 
 	if(
 		looking_at != null && (
-			(global_looking_at == null)
-			|| pos(global_looking_at) != pos(looking_at)
+			(global_looking_at:p == null)
+			|| pos(global_looking_at:p) != pos(looking_at)
 		), (
 			_on_looked_at_block(p, looking_at);
 		)
 	);
 
-	global_looking_at = looking_at;
+	global_looking_at:p = looking_at;
 );
 
 _on_looked_at_block(p, b) -> (
@@ -41,8 +46,8 @@ _show_block_name(p, name) -> (
 __on_player_swaps_hands(p) -> (
 	h = query(p, 'holds', 'mainhand');
 
-	if(h == null && _can_rename(global_looking_at),
-		_rewrite_name(p, global_looking_at);
+	if(h == null && _can_rename(global_looking_at:p),
+		_rewrite_name(p, global_looking_at:p);
 		'cancel'
 	)
 );
