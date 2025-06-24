@@ -125,6 +125,7 @@ global_faces_player_when_placed = [
 	'dispenser',
 	'piston',
 	'sticky_piston',
+	'observer',
 ];
 
 _faces_player_when_placed(b) -> (
@@ -293,7 +294,27 @@ __on_player_breaks_block(p, b) -> (
 	);
 );
 
-entity_load_handler('item', _(e, new) -> (
+global_switchable = [
+	['iron_block', 'white_stained_glass'],
+	['piston', 'sticky_piston'],
+	['dropper', 'dispenser'],
+	['repeater', 'comparator'],
+	['redstone', 'redstone_torch']
+];
+
+_switch_holding_block(p, i) -> (
+	for(global_switchable, (
+		ind = _ ~ i;
+		if(ind != null, (
+			inventory_set('equipment', p, 0, 1, _:(ind+1));
+			return(true);
+		));
+	));
+
+	false // Didn't switch
+);
+
+_on_new_entity(e, new) -> (
 	if(!new, return());
 
 	thrower = e~'nbt':'Thrower';
@@ -301,6 +322,8 @@ entity_load_handler('item', _(e, new) -> (
 
 	p = entity_selector(str('@p[nbt={UUID:%s}]', thrower)):0;
 	if(p == null, return());
+
+	if(query(p, 'sneaking'), return());
 
 	item = query(e, 'item'):0;
 	if(
@@ -329,11 +352,15 @@ entity_load_handler('item', _(e, new) -> (
 				inventory_set('equipment', p, 0, 1, global_awl_leaves),
 			);
 		),
-		return();
+		!_switch_holding_block(p, item), (
+			return()
+		),
 	);
 
 	modify(e, 'kill');
-));
+);
+
+entity_load_handler('item', '_on_new_entity');
 
 // _benchmark(func) -> (
 // 	t0 = time();
