@@ -44,9 +44,7 @@ _show_block_name(p, name) -> (
 );
 
 __on_player_swaps_hands(p) -> (
-	h = query(p, 'holds', 'mainhand');
-
-	if(h == null && _can_rename(global_looking_at:p),
+	if(_can_rename(global_looking_at:p),
 		_rewrite_name(p, global_looking_at:p);
 		'cancel'
 	)
