@@ -88,9 +88,9 @@ _text_component_to_format(c) -> (
 _format_into_text_component(s) -> (
 	encode_json(if(
 		s ~ '^ ', slice(s, 1),
-		pfx = s ~ '^([kveqnpdgftlcrmyw]|#[0-9A-F]{6})?(?= )', {
+		pfx = s ~ '^([kveqnpdgftlcrmyw]|#[0-9A-Fa-f]{6})?(?= )', {
 			'text' -> slice(s, length(pfx)+1),
-			'color' -> global_scarpet_colors:pfx || pfx,
+			'color' -> global_scarpet_colors:pfx || upper(pfx),
 		},
 		s,
 	))
