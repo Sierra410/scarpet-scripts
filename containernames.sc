@@ -214,8 +214,6 @@ _rewrite_name(p, b) -> (
 				// custom_name is always a string here, so passing it to
 				// _format_into_text_component is fine
 				nn = _format_into_text_component(decode_json(nn));
-
-				print(player('all'), str('nn: "%s"', nn));
 			));
 
 			_rename_block(b, nn);
