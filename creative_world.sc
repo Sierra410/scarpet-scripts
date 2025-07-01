@@ -323,6 +323,8 @@ _on_new_entity(e, new) -> (
 	p = entity_selector(str('@p[nbt={UUID:%s}]', thrower)):0;
 	if(p == null, return());
 
+    if(query(p, 'gamemode_id') != 1, return());
+
 	if(query(p, 'sneaking'), return());
 
 	item = query(e, 'item'):0;
