@@ -1,6 +1,6 @@
 __config() -> {
-    'strict' -> true,
-    'stay_loaded' -> true,
+	'strict' -> true,
+	'stay_loaded' -> true,
 	'scope' -> 'global',
 };
 
