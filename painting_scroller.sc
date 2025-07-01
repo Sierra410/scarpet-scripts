@@ -89,6 +89,11 @@ _cycle_painting(e, bwd) -> (
 			e, 'nbt_merge',
 			str('{variant:"%s"}', np),
 		);
+		sound(
+			'entity.painting.place',
+			pos(e),
+			1.0, 1.2, 'neutral'
+		);
 	));
 );
 
