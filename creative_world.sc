@@ -40,7 +40,12 @@ global_bell_last_rang = 0;
 global_bell = null;
 global_bell_powered = false;
 
-global_place_replacing = false;
+global_place_replacing_name = [
+	'Off',
+	'On',
+	'W/O updates',
+];
+global_place_replacing = 0;
 
 _bell_track(b) -> (
 	if(global_bell == null, schedule(0, '_bell_tick'));
@@ -160,10 +165,22 @@ __on_player_swaps_hands(p) -> (
 		return(),
 	);
 
-	global_place_replacing = !global_place_replacing;
-	action_msg(p, 'Block-replacing mode: ', global_place_replacing);
+	global_place_replacing = (global_place_replacing+1)%3;
+	action_msg(
+		p, 'Block-replacing mode:',
+		['%%%l', '%%%y', '%%%d']:global_place_replacing,
+		global_place_replacing_name:global_place_replacing,
+	);
 
 	'cancel';
+);
+
+_set_with_mode_respect(p, b, s) -> (
+	if(global_place_replacing == 2,
+		without_updates(set(p, b, s)),
+	global_place_replacing == 1,
+		set(p, b, s),
+	)
 );
 
 _place_replacing(p, i, h, b, face, hitvec) -> (
@@ -181,7 +198,7 @@ _place_replacing(p, i, h, b, face, hitvec) -> (
 
 	if(
 		nb == 'target' && b == 'target', (
-			set(b, 'iron_block', state);
+			_set_with_mode_respect(b, 'iron_block', state);
 			return('cancel');
 		),
 		block_tags(nb, 'slabs'), (
@@ -196,11 +213,11 @@ _place_replacing(p, i, h, b, face, hitvec) -> (
 		),
 		block_tags(nb, 'trapdoors'), (
 			if(block_tags(b, 'trapdoors'), (
-				set(b, nb, block_state(b));
+				_set_with_mode_respect(b, nb, block_state(b));
 			), (
 				state:'facing' = _facing_horizontal_only(p, true);
 				state:'half' = _which_half(b, hitvec);
-				set(b, nb, state);
+				_set_with_mode_respect(b, nb, state);
 			));
 
 			return('cancel');
@@ -225,12 +242,12 @@ _place_replacing(p, i, h, b, face, hitvec) -> (
 			));
 
 			without_updates((
-				set(
+				_set_with_mode_respect(
 					b, nb,
 					{'facing'->facing, 'part'->part_this},
 				);
 
-				set(
+				_set_with_mode_respect(
 					pos_offset(b, facing, off), nb,
 					{'facing'->facing, 'part'->part_other},
 				);
@@ -240,7 +257,7 @@ _place_replacing(p, i, h, b, face, hitvec) -> (
 		),
 	);
 
-	set(b, nb, state);
+	_set_with_mode_respect(b, nb, state);
 
 	'cancel'
 );
