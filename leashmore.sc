@@ -26,6 +26,7 @@ global_leashable = [
 	'slime',
 	'enderman',
 	'piglin',
+	'zombified_piglin',
 	'creaking',
 ];
 
