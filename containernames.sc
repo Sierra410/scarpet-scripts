@@ -172,13 +172,60 @@ _on_looking_at_chiseled_bookshelf(p, b) -> (
 	global_looking_at_slot:p = slot;
 );
 
-global_rarity_colors = [
-	'white',
-	'yellow',
-	'green',
-	'aqua',
-	'light_purple'
+global_rarity_colors = {
+	1 -> 'white',
+	2 -> 'yellow',
+	3 -> 'green',
+	4 -> 'aqua',
+	5 -> 'light_purple',
+	'mending' -> 'gold',
+	'curse' -> 'red'
+};
+
+global_one_level = [
+	'minecraft:curse_of_binding',
+	'minecraft:curse_of_vanishing',
+	'minecraft:mending',
+	'minecraft:aqua_affinity',
+	'minecraft:channeling',
+	'minecraft:flame',
+	'minecraft:infinity',
+	'minecraft:multishot',
+	'minecraft:silk_touch'
 ];
+
+_format_enchantment_component(e, l) -> (
+	ench = {
+		'translate' -> 'enchantment.' + replace(e, ':', '.'),
+	};
+
+	no_number = (global_one_level~e) != null;
+
+	// Treasure color buffs
+	color = global_rarity_colors:(if(
+		e == 'minecraft:mending', 'mending',
+		e == 'minecraft:frost_walker', l + 3,
+		e == 'minecraft:soul_speed'
+		|| e == 'minecraft:swift_sneak'
+		|| e == 'minecraft:wind_burst', l + 2,
+		e == 'minecraft:curse_of_binding'
+		|| e == 'minecraft:curse_of_vanishing', 'curse',
+		l,
+	));
+
+	{
+		'color' -> color,
+		'text' -> '',
+		'extra' -> if(no_number,
+			[ench],
+			[ench, {
+				'text' -> ' ',
+			}, {
+				'translate' -> str('enchantment.level.%d', l),
+			}],
+		)
+	}
+);
 
 _on_looked_at_chiseled_slot(p, b, s) -> (
 	i = inventory_get(b, s);
@@ -188,30 +235,13 @@ _on_looked_at_chiseled_slot(p, b, s) -> (
 			enchs = i:2:'components':'minecraft:stored_enchantments':'levels';
 			comps = [];
 			for(pairs(parse_nbt(enchs)),
-				comps += {
-					'color' -> global_rarity_colors:((_:1)-1),
-					'text' -> '',
-					'extra' -> [{
-						'translate' -> 'enchantment.' + replace(_:0, ':', '.'),
-					}, {
-						'text' -> ' ',
-					}, {
-						'translate' -> str('enchantment.level.%d', _:1),
-					}]
-				};
-
+				comps += _format_enchantment_component(_:0, _:1);
 				comps += {
 					'color' -> 'white',
 					'text' -> ', ',
 				};
 			);
 			delete(comps, length(comps)-1); // Remove the last comma
-			// encode_json({
-			// 	'color' -> 'yellow',
-			// 	'bold' -> true,
-			// 	'text' -> '',
-			// 	'extra' -> comps
-			// })
 			comps
 		),
 		item_display_name(i),
