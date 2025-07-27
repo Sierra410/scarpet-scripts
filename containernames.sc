@@ -97,6 +97,7 @@ _format_into_text_component(s) -> (
 );
 
 global_looking_at = {};
+global_looking_at_slot = {};
 
 __on_tick() -> (
 	for(player('all'), _on_tick_player(_));
@@ -104,6 +105,7 @@ __on_tick() -> (
 
 __on_player_disconnects(p, r) -> (
 	delete(global_looking_at, p);
+	delete(global_looking_at_slot, p);
 );
 
 _on_tick_player(p) -> (
@@ -122,12 +124,100 @@ _on_tick_player(p) -> (
 	);
 
 	global_looking_at:p = looking_at;
+
+	if(looking_at == 'chiseled_bookshelf',
+		_on_looking_at_chiseled_bookshelf(p, looking_at),
+		global_looking_at_slot:p = null,
+	);
 );
 
 _on_looked_at_block(p, b) -> (
 	if(_can_rename(b),
 		_show_block_name(p, b)
 	);
+);
+
+_on_looking_at_chiseled_bookshelf(p, b) -> (
+	hit = query(p, 'trace', 5, 'blocks', 'exact');
+	offset = hit-pos(b);
+	if(
+		offset:1 == 0 || offset:1 == 1, return(), // Ignore top/bottom faces
+		offset:0 == 0, (
+			dir='west';
+			x = offset:2;
+		),
+		offset:0 == 1, (
+			dir='east';
+			x = 1 - offset:2;
+		),
+		offset:2 == 0, (
+			dir='north';
+			x = 1 - offset:0;
+		),
+		offset:2 == 1, (
+			dir='south';
+			x = offset:0;
+		),
+	);
+	y = offset:1;
+
+	if(block_state(b):'facing' != dir, return());
+
+	slot = (1-round(y))*3+floor(x*3);
+
+	if(slot != global_looking_at_slot:p,
+		_on_looked_at_chiseled_slot(p, b, slot),
+	);
+
+	global_looking_at_slot:p = slot;
+);
+
+global_rarity_colors = [
+	'white',
+	'yellow',
+	'green',
+	'aqua',
+	'light_purple'
+];
+
+_on_looked_at_chiseled_slot(p, b, s) -> (
+	i = inventory_get(b, s);
+	title = if(
+		i == null, '',
+		i:0 == 'enchanted_book', (
+			enchs = i:2:'components':'minecraft:stored_enchantments':'levels';
+			comps = [];
+			for(pairs(parse_nbt(enchs)),
+				comps += {
+					'color' -> global_rarity_colors:((_:1)-1),
+					'text' -> '',
+					'extra' -> [{
+						'translate' -> 'enchantment.' + replace(_:0, ':', '.'),
+					}, {
+						'text' -> ' ',
+					}, {
+						'translate' -> str('enchantment.level.%d', _:1),
+					}]
+				};
+
+				comps += {
+					'color' -> 'white',
+					'text' -> ', ',
+				};
+			);
+			delete(comps, length(comps)-1); // Remove the last comma
+			// encode_json({
+			// 	'color' -> 'yellow',
+			// 	'bold' -> true,
+			// 	'text' -> '',
+			// 	'extra' -> comps
+			// })
+			comps
+		),
+		item_display_name(i),
+	);
+
+	run(str('/title %s actionbar %s', p, encode_json(title)));
 );
 
 _show_block_name(p, b) -> (
