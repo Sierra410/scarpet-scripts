@@ -5,6 +5,7 @@ __config() -> {
 	'libraries' -> [{
 		'source' -> 'libchatter.sc'
 	}],
+	'event_priority' -> 100,
 };
 
 import('libchatter',
