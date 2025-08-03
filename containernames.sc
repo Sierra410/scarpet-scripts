@@ -280,6 +280,7 @@ global_can_rename = [
 
 _can_rename(b) -> (
 	(global_can_rename ~ b) != null
+		|| block_tags(b, 'shulker_boxes')
 );
 
 _rename_block(b, n) -> (
