@@ -125,6 +125,10 @@ _on_tick_player(p) -> (
 
 	global_looking_at:p = looking_at;
 
+	// _on_looked_at_block fires once per block.
+	// One chiseled bookshelf has more than one slot, obviously, so
+	// _on_looked_at_block can't be used to detect the player looking at
+	// different slots of the same block, hence this code is in this function.
 	if(looking_at == 'chiseled_bookshelf',
 		_on_looking_at_chiseled_bookshelf(p, looking_at),
 		global_looking_at_slot:p = null,
@@ -132,8 +136,20 @@ _on_tick_player(p) -> (
 );
 
 _on_looked_at_block(p, b) -> (
-	if(_can_rename(b),
-		_show_block_name(p, b)
+	if(
+		_can_rename(b),
+			_show_block_name(p, b),
+		b == 'bee_nest' || b == 'beehive',
+			_show_bees(p, b),
+	);
+);
+
+_show_bees(p, b) -> (
+	bees = length(parse_nbt(block_data(b):'bees'));
+
+	display_title(
+		p, 'actionbar',
+		format('by '+'['+'🐝'*bees+']')
 	);
 );
 
