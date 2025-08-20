@@ -27,12 +27,12 @@ _leash_fix(e, new) -> (
 	modify(e, 'tag', 'LEASHFIX'); // Tag the entity to indicate it was us
 	logger('info', str('Lobotomized %s (%s)', e, uuid));
 
-	schedule(100, _(id) -> ( // Re-enable AI 5 seconds later
-		e = entity_id(id);
+	schedule(100, _(uuid) -> ( // Re-enable AI 5 seconds later
+		e = entity_id(uuid);
 		if(e == null,
 			logger('error', str(
 				'Lobotomized entity %s disappeared before being re-brained!',
-				id,
+				uuid,
 			));
 			return();
 		);
