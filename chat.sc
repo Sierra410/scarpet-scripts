@@ -29,7 +29,17 @@ __on_player_disconnects(p, r) -> (
             r = 'timeout',
     );
 
-    _wpa('D', p, r); // D for Disconnect
+    xyz = str('[%.2f,%.2f,%.2f]',pos(player()));
+
+    d = p~'dimension';
+    d = if(
+        d == 'overworld', 'O',
+        d == 'the_nether', 'N',
+        d == 'the_end', 'E',
+        d, // default = no change
+    );
+
+    _wpa('D', p, d+xyz, r); // D for Disconnect
 );
 
 __on_player_dies(p) -> (
