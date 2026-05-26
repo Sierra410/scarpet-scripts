@@ -7,11 +7,6 @@ __config() -> {
 	'event_priority' -> 1000,
 };
 
-import('libchatter',
-	'player_msg',
-	'msg',
-);
-
 global_mc_colors = {
 	'black' -> 'k',
 	'dark_blue' -> 'v',
