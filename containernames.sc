@@ -1,9 +1,16 @@
+// For Minecraft 26.1.2
+
 __config() -> {
     'strict' -> true,
     'stay_loaded' -> true,
 	'scope' -> 'global',
 	'event_priority' -> 1000,
 };
+
+import('libchatter',
+	'player_msg',
+	'msg',
+);
 
 global_mc_colors = {
 	'black' -> 'k',
@@ -60,7 +67,7 @@ _txtc_fmt(c, def_color) -> (
 		t == 'string', (
 			format(def_color + 'b ' + c)
 		),
-		t == 'map', (
+		t == 'nbt' || t == 'map', (
 			color = _mc_color_to_format_color(c:'color') || def_color;
 			text = c:'text' || '';
 
@@ -81,19 +88,15 @@ _txtc_fmt(c, def_color) -> (
 	)
 );
 
-_text_component_to_format(c) -> (
-	_txtc_fmt(decode_json(c), 'w')
-);
-
 _format_into_text_component(s) -> (
-	encode_json(if(
+	if(
 		s ~ '^ ', slice(s, 1),
 		pfx = s ~ '^([kveqnpdgftlcrmyw]|#[0-9A-Fa-f]{6})?(?= )', {
 			'text' -> slice(s, length(pfx)+1),
 			'color' -> global_scarpet_colors:pfx || upper(pfx),
 		},
 		s,
-	))
+	)
 );
 
 global_looking_at = {};
@@ -248,7 +251,7 @@ _on_looked_at_chiseled_slot(p, b, s) -> (
 	title = if(
 		i == null, '',
 		i:0 == 'enchanted_book', (
-			enchs = i:2:'components':'minecraft:stored_enchantments':'levels';
+			enchs = i:2:'components':'minecraft:stored_enchantments';
 			comps = [];
 			for(pairs(parse_nbt(enchs)),
 				comps += _format_enchantment_component(_:0, _:1);
@@ -272,7 +275,7 @@ _show_block_name(p, b) -> (
 
 	display_title(
 		p, 'actionbar',
-		_text_component_to_format(name)
+		_txtc_fmt(name, 'w')
 	);
 );
 
@@ -305,7 +308,7 @@ _rename_block(b, n) -> (
 	run(str(
 		'data merge block %d %d %d {CustomName:%s}',
 		...pos(b),
-		escape_nbt(n),
+		encode_nbt(n),
 	));
 );
 
@@ -352,7 +355,7 @@ _rewrite_name(p, b) -> (
 			if(nn != null, (
 				// custom_name is always a string here, so passing it to
 				// _format_into_text_component is fine
-				nn = _format_into_text_component(decode_json(nn));
+				nn = _format_into_text_component(nn);
 			));
 
 			_rename_block(b, nn);
@@ -367,6 +370,11 @@ _rewrite_name(p, b) -> (
 			);
 
 			close_screen(s);
+
+			display_title(
+				p, 'actionbar',
+				_txtc_fmt(nn, 'w')
+			);
 		));
 
 		'cancel'
@@ -378,6 +386,7 @@ _rewrite_name(p, b) -> (
 	);
 
 	old = block_data(b):'CustomName';
+	old = old:'text' || old;
 
 	inventory_set(
 		s, 0, 1, b, if(old != null, str(
