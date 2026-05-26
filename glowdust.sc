@@ -1,3 +1,5 @@
+// Minecraft 1.20.5+
+
 __config() -> {
     'strict' -> true,
     'stay_loaded' -> true,
@@ -44,7 +46,7 @@ _brush(p, item, b, bp, face) -> (
 	n = number(block_state(b, 'level'));
 	spawn(
 		'item', bp + [0.5, 0.5, 0.5],
-		str('{Item:{id:"minecraft:glowstone_dust", Count:%d}}', n),
+		str('{Item:{id:"minecraft:glowstone_dust", count:%d}}', n),
 	);
 	sound('minecraft:block.composter.ready', bp, 1, 1, 'block');
 
